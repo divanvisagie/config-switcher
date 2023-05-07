@@ -1,7 +1,11 @@
 use std::{error::Error, path::PathBuf};
 
 fn get_path() -> Option<PathBuf> {
-    let path = dirs::config_dir();
+    let path = if cfg!(target_os = "macos") {
+        dirs::home_dir().map(|path| path.join(".config"))
+    } else {
+        dirs::config_dir()
+    };
 
     if let Some(path) = path {
         let path = path.join("alacritty");
@@ -32,8 +36,8 @@ fn find_yaml_files_in_dir(path: &PathBuf) -> Result<Vec<PathBuf>, Box<dyn Error>
 
 fn main() {
     let config_root = get_path();
+    println!("config {:?}",config_root);
     let theme_directory = config_root.unwrap().join("themes").join("themes");
-
     match find_yaml_files_in_dir(&theme_directory) {
         Ok(files) => {
             for file in files {
