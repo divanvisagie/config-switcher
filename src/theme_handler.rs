@@ -1,9 +1,16 @@
 use std::{error::Error, path::PathBuf};
 
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug)]
 pub struct Theme {
     pub name: String,
     pub path: PathBuf,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AlacrittyConfig {
+    import: Vec<String>,
 }
 
 pub fn get_path() -> Option<PathBuf> {
@@ -53,6 +60,15 @@ fn get_name_from_path(path: &PathBuf) -> Option<String> {
         .and_then(|name| name.to_str().map(|s| s.to_owned()))
 }
 
+fn read_alacritty_config() -> Result<AlacrittyConfig, Box<dyn Error>> {
+    let path = get_path().unwrap().join("alacritty.yml");
+    let str = std::fs::read_to_string(path)?;
+    //parse yaml
+    let ac = serde_yaml::from_str(&str)
+        .map_err(|e| format!("Error parsing alacritty config: {}", e).into());
+    ac
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -77,9 +93,15 @@ mod tests {
             .join("themes")
             .join("themes")
             .join("gruvbox_dark.yaml");
-        print!("{:?}", path);
         let name = get_name_from_path(&path);
         assert!(name.is_some());
         assert_eq!(name.unwrap(), "gruvbox_dark");
+    }
+
+    #[test]
+    fn test_read_alacritty_config() {
+        let config = read_alacritty_config();
+        print!("{:?}", config);
+        assert!(config.is_ok());
     }
 }
