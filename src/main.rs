@@ -1,47 +1,15 @@
-use std::{error::Error, path::PathBuf};
+mod theme_handler;
 
-fn get_path() -> Option<PathBuf> {
-    let path = if cfg!(target_os = "macos") {
-        dirs::home_dir().map(|path| path.join(".config"))
-    } else {
-        dirs::config_dir()
-    };
-
-    if let Some(path) = path {
-        let path = path.join("alacritty");
-        Some(path)
-    } else {
-        None
-    }
-}
-
-fn find_yaml_files_in_dir(path: &PathBuf) -> Result<Vec<PathBuf>, Box<dyn Error>> {
-    let mut files = Vec::new();
-
-    for entry in path.read_dir()? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if path.is_file() {
-            if let Some(ext) = path.extension() {
-                if ext == "yaml" {
-                    files.push(path);
-                }
-            }
-        }
-    }
-
-    Ok(files)
-}
+use theme_handler::{find_yaml_files_in_dir, get_path};
 
 fn main() {
     let config_root = get_path();
-    println!("config {:?}",config_root);
+    println!("config {:?}", config_root);
     let theme_directory = config_root.unwrap().join("themes").join("themes");
     match find_yaml_files_in_dir(&theme_directory) {
-        Ok(files) => {
-            for file in files {
-                println!("{}", file.to_str().unwrap());
+        Ok(themes) => {
+            for theme in themes {
+                println!("{:?}", theme);
             }
         }
         Err(e) => println!("Error: {}", e),
